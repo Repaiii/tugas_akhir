@@ -15,7 +15,8 @@ class Command(BaseCommand):
            database="coba"
         )
         
-        query = "SELECT Nama, IPS, IPK, SK2PM, Pembayaran_UKT, Semester FROM Mahasiswa"
+        query = """SELECT Mahasiswa.Nama, Mahasiswa.IPS, Mahasiswa.IPK, Mahasiswa.SK2PM, Mahasiswa.Pembayaran_UKT, Mahasiswa.Semester, 
+                    Bobot.bobot_IPS, Bobot.bobot_IPK, Bobot.bobot_SK2PM, Bobot.bobot_UKT, Bobot.bobot_SMT FROM Mahasiswa, Bobot;"""
         df = pd.read_sql(query, connection)
         
         # Fungsi perhitungan himpunan fuzzy untuk IPS & IPK
@@ -61,34 +62,42 @@ class Command(BaseCommand):
             
         # Fungsi perhitungan himpunan fuzzy untuk SK2PM
         def fuzzy_membership_sangat_rendah_sk2pm(x):
-            if x < 1500:
+            if x <= 1000:
                 return 1
-            elif 1500 <= x < 3000:
-                return (3000 - x) / 1500
+            elif 1000 < x < 2000:
+                return (2000 - x) / 1000
             else:
                 return 0
-        
+
         def fuzzy_membership_rendah_sk2pm(x):
-            if x < 1500 or x >= 3000:
+            if x <= 1000 or x >= 3000:
                 return 0
-            elif 1500 <= x < 3000:
-                return (x - 1500) / 1500
-        
+            elif 1000 < x <= 2000:
+                return (x - 1000) / 1000
+            elif 2000 < x < 3000:
+                return (3000 - x) / 1000
+
         def fuzzy_membership_cukup_sk2pm(x):
-            if x < 3000 or x >= 4500:
+            if x <= 2000 or x >= 4000:
                 return 0
-            elif 3000 <= x < 4500:
-                return (x - 3000) / 1500
-        
+            elif 2000 < x <= 3000:
+                return (x - 2000) / 1000
+            elif 3000 < x < 4000:
+                return (4000 - x) / 1000
+
         def fuzzy_membership_tinggi_sk2pm(x):
-            if x < 4500 or x >= 6000:\
+            if x <= 3000 or x >= 5000:
                 return 0
-            elif 4500 <= x < 6000:
-                return (x - 4500) / 1500
-            
+            elif 3000 < x <= 4000:
+                return (x - 3000) / 1000
+            elif 4000 < x < 5000:
+                return (5000 - x) / 1000
+
         def fuzzy_membership_sangat_tinggi_sk2pm(x):
-            if x < 6000:
+            if x <= 4000:
                 return 0
+            elif 4000 < x <= 5000:
+                return (x - 4000) / 1000
             else:
                 return 1
         
@@ -194,16 +203,16 @@ class Command(BaseCommand):
         # Normalisasi matriks X
         df_normalized = matriks_x.copy()
         for col in matriks_x.columns[1:]:
-            if col == 'Skor_SMT':
-                # Menggunakan nilai minimum dibagi nilai kolom itu sendiri
-                df_normalized[col] = df[col].min() / df[col]
-            else:
-                # Menggunakan nilai kolom dibagi nilai maksimum kolom
-                df_normalized[col] = df[col] / df[col].max()
+            # Menggunakan nilai kolom dibagi nilai maksimum kolom
+            df_normalized[col] = df[col] / df[col].max()
         
         # Dataframe bobot kriteria
         bobot_data = {'Kriteria': ['K1', 'K2', 'K3', 'K4', 'K5'],
-                      'Bobot (angka)': [0.45, 0.25, 0.1, 0.05, 0.15]}
+                      'Bobot (angka)': [df['bobot_IPS'].values[0],
+                                        df['bobot_IPK'].values[0],
+                                        df['bobot_SK2PM'].values[0],
+                                        df['bobot_UKT'].values[0],
+                                        df['bobot_SMT'].values[0]]}
         df_bobot = pd.DataFrame(bobot_data)
         
         # Menghitung nilai V untuk tiap alternatif
@@ -216,11 +225,11 @@ class Command(BaseCommand):
         
         # Menambahkan kolom Status_Mahasiswa ke dalam dataframe
         df_normalized['Bahaya'] = df_normalized['Nilai_V'].apply(fuzzy_membership_bahaya)
-        df_normalized['Sedang'] = df_normalized['Nilai_V'].apply(fuzzy_membership_sedang)
+        df_normalized['Cukup'] = df_normalized['Nilai_V'].apply(fuzzy_membership_sedang)
         df_normalized['Aman'] = df_normalized['Nilai_V'].apply(fuzzy_membership_aman)
         
         # Menambahkan kolom Status ke dalam dataframe
-        df_normalized['Status'] = df_normalized[['Bahaya', 'Sedang', 'Aman']].idxmax(axis=1).apply(lambda x: x.replace('fuzzy_membership_', ''))
+        df_normalized['Status'] = df_normalized[['Bahaya', 'Cukup', 'Aman']].idxmax(axis=1).apply(lambda x: x.replace('fuzzy_membership_', ''))
         
         # Mengurutkan dataframe berdasarkan kolom 'Status'
         df_sorted_status = df_normalized.sort_values(by='Status')

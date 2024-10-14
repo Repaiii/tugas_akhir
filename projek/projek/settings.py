@@ -39,6 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'tes',
     'rest_framework',
+    'cloudinary',
+    'cloudinary_storage',
 ]
 
 MIDDLEWARE = [
@@ -137,3 +139,11 @@ REST_FRAMEWORK = {
         #'rest_framework.permissions.IsAuthenticated',
     ],
 }
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': 'dm26jpqpx',
+    'API_KEY': '587395366744287',
+    'API_SECRET': 'hB_vpY4Orj9DF4gswjIm_683Eoo'
+}
+
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'

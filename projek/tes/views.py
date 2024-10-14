@@ -6,6 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from rest_framework import viewsets
 from .management.commands.get_status import Command
+from django.shortcuts import get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.hashers import make_password, check_password
 from django.shortcuts import render
@@ -23,7 +24,17 @@ class DosenViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
         serializer = self.get_serializer(queryset, many=True)
+
+        # Jalankan fungsi untuk menghitung status
+        get_status = Command()
+        get_status.handle()
+
         return Response({'data': serializer.data}, status=status.HTTP_200_OK)
+    
+    def destroy(self, request, *args, **kwargs):
+        dosen = get_object_or_404(Dosen, id_dosen=kwargs['id_dosen'])
+        dosen.delete()
+        return Response({'message': 'Dosen berhasil dihapus'}, status=status.HTTP_200_OK)
     
 
 class MahasiswaViewSet(viewsets.ModelViewSet):
@@ -40,6 +51,22 @@ class MahasiswaViewSet(viewsets.ModelViewSet):
 
         # Mengembalikan response dengan data mahasiswa dan status 200 OK
         return Response({'data': serializer.data}, status=status.HTTP_200_OK)
+    
+    def destroy(self, request, *args, **kwargs):
+        dosen = get_object_or_404(Mahasiswa, id_mahasiswa=kwargs['id_mahasiswa'])
+        dosen.delete()
+        return Response({'message': 'Mahasiswa berhasil dihapus'}, status=status.HTTP_200_OK)
+
+class ListMahasiswaViewSet(viewsets.ViewSet):
+    def list(self, request):
+        # Mengambil semua mahasiswa yang id_dosennya bernilai null atau 0
+        queryset = Mahasiswa.objects.filter(id_dosen__isnull=True) | Mahasiswa.objects.filter(id_dosen=0)
+        
+        # Serialize data mahasiswa
+        serializer = MahasiswaSerializer(queryset, many=True)
+        
+        # Mengembalikan response dengan data mahasiswa
+        return Response({'data': serializer.data})
 
 class AdminsViewSet(viewsets.ModelViewSet):
     queryset = Admins.objects.all()
@@ -71,30 +98,33 @@ class PenggunaViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
 
-        return Response(serializer.data)
+        return Response({'data': serializer.data}, status=status.HTTP_200_OK)
     
 class PerwalianListView(APIView):
     def get(self, request, id_dosen):
         mahasiswa_perwalian = Mahasiswa.objects.filter(id_dosen=id_dosen)
         serializer = MahasiswaSerializer(mahasiswa_perwalian, many=True)
+        # Jalankan fungsi untuk menghitung status
+        get_status = Command()
+        get_status.handle()
         return Response({'data': serializer.data}, status=status.HTTP_200_OK)
 
 @receiver(post_save, sender=Dosen)
 def create_or_update_pengguna_dosen(sender, instance, created, **kwargs):
     if created:
-        # Jika objek Dosen baru dibuat, buat objek Pengguna dengan nilai id_pengguna yang sesuai
-        Pengguna.objects.create(id_pengguna=instance.id_pengguna, username=instance.nip)
+        pengguna = Pengguna.objects.create(id_pengguna=instance.id_pengguna, username=instance.nip, role='dosen')
+        instance.id_pengguna = pengguna
+        instance.save()
     else:
-        # Jika objek Dosen diperbarui
         try:
-            # Ambil objek Pengguna yang terkait dengan objek Dosen
             pengguna = Pengguna.objects.get(id_pengguna=instance.id_pengguna.id_pengguna)
-            # Perbarui username Pengguna sesuai dengan nilai nip Dosen
             pengguna.username = instance.nip
+            pengguna.role = 'dosen'
             pengguna.save()
         except Pengguna.DoesNotExist:
-            # Jika objek Pengguna tidak ditemukan, buat objek Pengguna baru dengan nilai id_pengguna dari objek Dosen
-            Pengguna.objects.create(id_pengguna=instance.id_pengguna.id_pengguna, username=instance.nip)
+            pengguna = Pengguna.objects.create(id_pengguna=instance.id_pengguna.id_pengguna, username=instance.nip, role='dosen')
+            instance.id_pengguna = pengguna
+            instance.save()
 
 
 @receiver(post_delete, sender=Dosen)
@@ -111,18 +141,19 @@ def delete_pengguna_dosen(sender, instance, **kwargs):
 def create_or_update_pengguna_mahasiswa(sender, instance, created, **kwargs):
     if created:
         # Jika objek Dosen baru dibuat, buat objek Pengguna dengan nilai id_pengguna yang sesuai
-        Pengguna.objects.create(id_pengguna=instance.id_pengguna, username=instance.nim)
+        Pengguna.objects.create(id_pengguna=instance.id_pengguna, username=instance.nim, role='mahasiswa')
     else:
         # Jika objek Dosen diperbarui
         try:
             # Ambil objek Pengguna yang terkait dengan objek Dosen
             pengguna = Pengguna.objects.get(id_pengguna=instance.id_pengguna.id_pengguna)
-            # Perbarui username Pengguna sesuai dengan nilai nip Dosen
+            # Perbarui username Pengguna sesuai dengan nilai nim
             pengguna.username = instance.nim
+            pengguna.role = 'mahasiswa'
             pengguna.save()
         except Pengguna.DoesNotExist:
             # Jika objek Pengguna tidak ditemukan, buat objek Pengguna baru dengan nilai id_pengguna dari objek Dosen
-            Pengguna.objects.create(id_pengguna=instance.id_pengguna.id_pengguna, username=instance.nim)
+            Pengguna.objects.create(id_pengguna=instance.id_pengguna.id_pengguna, username=instance.nim, role='mahasiswa')
 
 @receiver(post_delete, sender=Mahasiswa)
 def delete_pengguna_mahasiswa(sender, instance, **kwargs):
@@ -166,7 +197,7 @@ def perwalian_post(request):
             mahasiswa_perwalian.update(id_dosen=dosen)
             serializer = MahasiswaSerializer(mahasiswa_perwalian, many=True)
 
-            return Response({'data': serializer.data, 'message': 'berhasil mengubah data'}, status=status.HTTP_200_OK)
+            return Response({'data': serializer.data, 'message': 'Data perwalian berhasil dibuat'}, status=status.HTTP_200_OK)
 
         except Dosen.DoesNotExist:
             return Response({'error': 'ID dosen tidak ditemukan'}, status=status.HTTP_400_BAD_REQUEST)
@@ -182,7 +213,7 @@ def perwalian_delete(request, id_dosen, id_mahasiswa):
             perwalian.id_dosen = None
             perwalian.save()
 
-            return Response({'message': 'Data perwalian berhasil dihapus'}, status=status.HTTP_204_NO_CONTENT)
+            return Response({'message': 'Data perwalian berhasil dihapus'}, status=status.HTTP_200_OK)
 
         except Mahasiswa.DoesNotExist:
             return Response({'error': 'Data perwalian tidak ditemukan'}, status=status.HTTP_404_NOT_FOUND)
@@ -237,10 +268,11 @@ def user_login(request):
                             'username': pengguna.username,
                             'role': pengguna.role,
                             'nama_mahasiswa': mahasiswa.nama if mahasiswa else None,
+                            'id_mahasiswa': mahasiswa.id_mahasiswa if mahasiswa else None,
                             'ips': mahasiswa.ips if mahasiswa else None,
                             'ipk': mahasiswa.ipk if mahasiswa else None,
                             'sk2pm': mahasiswa.sk2pm if mahasiswa else None,
-                            'foto_mahasiswa': mahasiswa.foto_mahasiswa if mahasiswa else None,
+                            'foto_mahasiswa': mahasiswa.foto_mahasiswa.url if mahasiswa else None,
                             # Tambahkan data tambahan lainnya dari tabel Mahasiswa jika diperlukan
                         },
                         'message': 'Berhasil login'
@@ -255,7 +287,7 @@ def user_login(request):
                             'nama_dosen': dosen.nama_dosen if dosen else None,
                             'id_dosen': dosen.id_dosen if dosen else None,
                             'nip': dosen.nip if dosen else None,
-                            'foto_mahasiswa': dosen.foto_dosen if dosen else None,
+                            'foto_dosen': dosen.foto_dosen.url if dosen else None,
                             # Tambahkan data tambahan lainnya dari tabel Dosen jika diperlukan
                         },
                         'message': 'Berhasil login'
