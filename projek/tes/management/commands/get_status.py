@@ -9,10 +9,10 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         connection = mysql.connector.connect(
-           host="127.0.0.1",
-           user="root",
-           password="",
-           database="coba"
+           host="192.168.0.201",
+           user="rafy",
+           password="rafyif",
+           database="rafy_perwalianif"
         )
         
         query = """SELECT Mahasiswa.Nama, Mahasiswa.IPS, Mahasiswa.IPK, Mahasiswa.SK2PM, Mahasiswa.Pembayaran_UKT, Mahasiswa.Semester, 
@@ -237,10 +237,10 @@ class Command(BaseCommand):
         # Membuat koneksi ke database
         try:
             connection = mysql.connector.connect(
-                host="127.0.0.1",
-                user="root",
-                password="",
-                database="coba"
+                host="192.168.0.201",
+                user="rafy",
+                password="rafyif",
+                database="rafy_perwalianif"
             )
 
             if connection.is_connected():

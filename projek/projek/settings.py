@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-1c_fr5p-c@8!@=!2e4#a&t=@^t))9-8q9%b*j_6ar#^&w0*23i
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['perwalianif.panti.my.id']
 
 
 # Application definition
@@ -80,10 +80,10 @@ WSGI_APPLICATION = 'projek.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'coba',
-        'USER': 'root',
-        'PASSWORD': '',
-        'HOST': '127.0.0.1',
+        'NAME': 'rafy_perwalianif',
+        'USER': 'rafy',
+        'PASSWORD': 'rafyif',
+        'HOST': '192.168.0.201',
         'PORT': '3306',
     }
 }
