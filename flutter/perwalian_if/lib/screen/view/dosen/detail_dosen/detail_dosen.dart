@@ -92,7 +92,6 @@ class _DetailDosenState extends State<DetailDosen> {
           ),
         ],
       ),
-
       body: Consumer<ViewModelHome>(
         builder: (context, model, child) {
           return viewModelHome.isLoadingDetail
@@ -228,7 +227,9 @@ class _DetailDosenState extends State<DetailDosen> {
                                   ),
                                 ),
                               ),
-                              const SizedBox(height: 10,),
+                              const SizedBox(
+                                height: 10,
+                              ),
                               const Divider(
                                 thickness: 1.5,
                               ),
@@ -278,6 +279,19 @@ class _DetailDosenState extends State<DetailDosen> {
                                                 width: 75,
                                                 height: 75,
                                                 fit: BoxFit.cover,
+                                                errorBuilder: (BuildContext
+                                                        context,
+                                                    Object exception,
+                                                    StackTrace? stackTrace) {
+                                                  return const Center(
+                                                    child: Icon(
+                                                      Icons
+                                                          .person, // Ikon yang ditampilkan saat gambar gagal dimuat
+                                                      size: 75.0,
+                                                      color: Colors.grey,
+                                                    ),
+                                                  );
+                                                },
                                               ),
                                             ),
                                             const SizedBox(
@@ -502,6 +516,19 @@ class _DetailDosenState extends State<DetailDosen> {
                                                   width: 75,
                                                   height: 75,
                                                   fit: BoxFit.cover,
+                                                  errorBuilder: (BuildContext
+                                                          context,
+                                                      Object exception,
+                                                      StackTrace? stackTrace) {
+                                                    return const Center(
+                                                      child: Icon(
+                                                        Icons
+                                                            .person, // Ikon yang ditampilkan saat gambar gagal dimuat
+                                                        size: 75.0,
+                                                        color: Colors.grey,
+                                                      ),
+                                                    );
+                                                  },
                                                 ),
                                               ),
                                               const SizedBox(

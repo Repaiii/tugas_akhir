@@ -1,5 +1,5 @@
 class Urls {
-  static const String baseUrl = "https://r3gkrwxq-8080.asse.devtunnels.ms";
+  static const String baseUrl = "https://perwalianif.panti.my.id/";
   static const String login = "/login/";
   static const String fetchMahasiswa = "/mahasiswa/";
   static const String fetchAllDosen = "/dosen/";

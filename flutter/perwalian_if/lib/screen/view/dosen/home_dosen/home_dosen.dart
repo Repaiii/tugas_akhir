@@ -625,6 +625,16 @@ class _HomeDosenState extends State<HomeDosen> {
                                                       width: double.infinity,
                                                       height: 120.0,
                                                       fit: BoxFit.cover,
+                                                      errorBuilder:
+                                                        (BuildContext context,Object exception,StackTrace?stackTrace) {
+                                                        return const Center(
+                                                        child: Icon(
+                                                          Icons.person, // Ikon yang ditampilkan saat gambar gagal dimuat
+                                                          size: 120.0,
+                                                          color: Colors.grey,
+                                                        ),
+                                                      );
+                                                    },
                                                     ),
                                                   ),
                                                   const SizedBox(

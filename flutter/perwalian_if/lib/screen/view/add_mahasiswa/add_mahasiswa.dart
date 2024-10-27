@@ -37,10 +37,7 @@ class _AddMahasiswaState extends State<AddMahasiswa> {
           "Tambah Mahasiswa",
           textAlign: TextAlign.center,
           style: GoogleFonts.poppins(
-            color: Colors.black,
-            fontSize: 20,
-            fontWeight: FontWeight.w600
-          ),
+              color: Colors.black, fontSize: 20, fontWeight: FontWeight.w600),
         ),
         centerTitle: true,
         backgroundColor: Colors.transparent,
@@ -89,6 +86,18 @@ class _AddMahasiswaState extends State<AddMahasiswa> {
                                       width: 50,
                                       height: 50,
                                       fit: BoxFit.cover,
+                                      errorBuilder: (BuildContext context,
+                                          Object exception,
+                                          StackTrace? stackTrace) {
+                                        return const Center(
+                                          child: Icon(
+                                            Icons
+                                                .person, // Ikon yang ditampilkan saat gambar gagal dimuat
+                                            size: 50.0,
+                                            color: Colors.grey,
+                                          ),
+                                        );
+                                      },
                                     ),
                                   ),
                                   const SizedBox(
