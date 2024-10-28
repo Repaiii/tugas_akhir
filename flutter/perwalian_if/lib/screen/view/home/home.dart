@@ -175,7 +175,7 @@ class _HomeState extends State<Home> {
                                 spacing: 10.0,
                                 runSpacing: 10.0,
                                 children: List.generate(
-                                  viewModel.modelFetchAllDosen!.data.length,
+                                  viewModel.modelFetchAllDosen?.data.length ?? 0,
                                   (index) {
                                     final dataDosen = viewModel
                                         .modelFetchAllDosen!.data[index];
